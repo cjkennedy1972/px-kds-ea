@@ -1,0 +1,54 @@
+kind: StorageCluster
+apiVersion: core.libopenstorage.org/v1
+metadata:
+  name: px-cluster
+  namespace: portworx
+  annotations:
+    portworx.io/is-openshift: "true"
+    portworx.io/misc-args: " --tracefile-diskusage=10 -skip-mirrors-dnld -T px-storev2 -enable_providerv2 "
+    portworx.io/preflight-check: "skip"
+    portworx.io/run-on-master: "true"
+spec:
+  image: registry.portworx.io/portworx/oci-monitor:3.5.0
+  imagePullPolicy: IfNotPresent
+  imagePullSecret: pxregistry
+  kvdb:
+    internal: true
+  cloudStorage:
+    deviceSpecs:
+    - size=2000
+    - size=2000
+    provider: pure
+    systemMetadataDeviceSpec: size=64
+  secretsProvider: k8s
+  startPort: 17001
+  stork:
+    enabled: true
+    args:
+      webhook-controller: "true"
+    image: registry.portworx.io/portworx/stork:kds-ea  
+  autopilot:
+    enabled: false
+  runtimeOptions:
+    default-io-profile: "6"
+    num_threads: "96"
+    num_io_threads: "72"
+    num_cpu_threads: "96"
+  csi:
+    kubeVirtStorageClasses:
+      pxRwxBlockKubevirt: false
+      pxRwxFileKubevirt: false
+      pxCdiScratch: true
+    enabled: true
+  monitoring:
+    telemetry:
+      enabled: true
+    prometheus:
+      exportMetrics: true
+  env:
+  - name: PX_IMAGE
+    value: registry.portworx.io/portworx/px-enterprise:kds-ea
+  - name: PX_ENABLE_CACHE_FLUSH
+    value: "true"
+  - name: PURE_FLASHARRAY_SAN_TYPE
+    value: FC
